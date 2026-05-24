@@ -13,7 +13,7 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
-    ['src\\privcage\\gui_app.py'],
+    ['scripts\\gui_entry.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,

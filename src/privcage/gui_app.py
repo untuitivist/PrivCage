@@ -6,11 +6,11 @@ import subprocess
 import os
 from pathlib import Path
 
-from .config import AppConfig, decode_master_key, load_config
-from .encoding import b64url_encode
-from .env_status import dependency_statuses, key_status
-from .processor import process_input
-from .restore import restore_markdown, reveal_placeholder
+from privcage.config import AppConfig, decode_master_key, load_config
+from privcage.encoding import b64url_encode
+from privcage.env_status import dependency_statuses, key_status
+from privcage.processor import process_input
+from privcage.restore import restore_markdown, reveal_placeholder
 
 
 class GuiState:

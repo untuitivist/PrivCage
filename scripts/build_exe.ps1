@@ -25,7 +25,7 @@ try {
         --hidden-import cryptography `
         --add-data "config.example;config.example" `
         --add-data "docs;docs" `
-        "src\privcage\gui_app.py"
+        "scripts\gui_entry.py"
 } finally {
     Pop-Location
 }
