@@ -16,7 +16,9 @@ build/
 __pycache__/
 *.py[cod]
 .venv/
+.venv-gui/
 venv/
+.pytest_cache/
 
 # OS/editor
 .DS_Store

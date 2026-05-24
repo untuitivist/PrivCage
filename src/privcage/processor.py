@@ -25,11 +25,21 @@ def process_input(
     output_root = output_root.resolve()
     if input_path.is_file():
         output_base = output_root / f"{input_path.name}.privacy"
-        return _process_files([input_path], input_path.parent, output_base, config, centralize_unprocessed, single_file=True)
+        state_base = output_root / ".privcage" / output_base.name
+        return _process_files(
+            [input_path],
+            input_path.parent,
+            output_base,
+            state_base,
+            config,
+            centralize_unprocessed,
+            single_file=True,
+        )
     if input_path.is_dir():
         output_base = output_root / f"{input_path.name}.privacy"
+        state_base = output_root / ".privcage" / output_base.name
         files = [path for path in input_path.rglob("*") if path.is_file()]
-        return _process_files(files, input_path, output_base, config, centralize_unprocessed, single_file=False)
+        return _process_files(files, input_path, output_base, state_base, config, centralize_unprocessed, single_file=False)
     raise PrivCageError(f"input does not exist: {input_path}")
 
 
@@ -37,6 +47,7 @@ def _process_files(
     files: list[Path],
     source_root: Path,
     output_base: Path,
+    state_base: Path,
     config: AppConfig,
     centralize_unprocessed: bool,
     single_file: bool,
@@ -44,22 +55,25 @@ def _process_files(
     processed: list[ProcessResult] = []
     unprocessed: list[UnprocessedResult] = []
     output_base.mkdir(parents=True, exist_ok=True)
+    state_base.mkdir(parents=True, exist_ok=True)
 
     for source in files:
         relative = Path(source.name) if single_file else source.relative_to(source_root)
         output_dir = output_base if single_file else output_base / relative.parent / f"{source.name}.privacy"
+        state_dir = state_base if single_file else state_base / relative.parent / f"{source.name}.privacy"
         try:
-            processed.append(_process_one(source, output_dir, config))
+            processed.append(_process_one(source, output_dir, state_dir, config))
         except Exception as exc:  # noqa: BLE001
             reason = str(exc) or exc.__class__.__name__
-            destination = _copy_unprocessed(source, output_base, relative, centralize_unprocessed, single_file)
+            destination = _copy_unprocessed(source, state_base, relative, centralize_unprocessed, single_file)
             unprocessed.append(UnprocessedResult(source=source, destination=destination, stage="parse", reason=reason))
 
     return processed, unprocessed
 
 
-def _process_one(source: Path, output_dir: Path, config: AppConfig) -> ProcessResult:
-    _ensure_dirs(output_dir)
+def _process_one(source: Path, output_dir: Path, state_dir: Path, config: AppConfig) -> ProcessResult:
+    _ensure_public_dirs(output_dir)
+    _ensure_state_dirs(state_dir)
     source_hash = sha256_file(source)
     parse_result = parse_file(source, output_dir)
     privacy_id = output_dir.name
@@ -74,9 +88,9 @@ def _process_one(source: Path, output_dir: Path, config: AppConfig) -> ProcessRe
     redacted, hit_records = apply_placeholders(parse_result.text, hits, context)
 
     document_path = output_dir / "document.md"
-    manifest_path = output_dir / "manifest.json"
-    restore_index_path = output_dir / "restore" / "index.json"
-    log_path = output_dir / "process.log"
+    manifest_path = state_dir / "manifest.json"
+    restore_index_path = state_dir / "restore" / "index.json"
+    log_path = state_dir / "process.log"
 
     document_path.write_text(render_document(redacted), encoding="utf-8")
     manifest = build_manifest(privacy_id, source.name, source.suffix.lower().lstrip("."), source_hash, hit_records)
@@ -88,6 +102,7 @@ def _process_one(source: Path, output_dir: Path, config: AppConfig) -> ProcessRe
     return ProcessResult(
         source=source,
         output_dir=output_dir,
+        state_dir=state_dir,
         manifest_path=manifest_path,
         document_path=document_path,
         log_path=log_path,
@@ -97,25 +112,30 @@ def _process_one(source: Path, output_dir: Path, config: AppConfig) -> ProcessRe
 
 def _copy_unprocessed(
     source: Path,
-    output_base: Path,
+    state_base: Path,
     relative: Path,
     centralize_unprocessed: bool,
     single_file: bool,
 ) -> Path:
     if single_file:
-        destination = output_base / "unprocessed" / source.name
+        destination = state_base / "unprocessed" / source.name
     elif centralize_unprocessed:
-        destination = output_base / "unprocessed" / relative
+        destination = state_base / "unprocessed" / relative
     else:
-        destination = output_base / relative
+        destination = state_base / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     return destination
 
 
-def _ensure_dirs(output_dir: Path) -> None:
-    for name in ("figures", "attachments", "restore", "unprocessed"):
+def _ensure_public_dirs(output_dir: Path) -> None:
+    for name in ("figures", "attachments"):
         (output_dir / name).mkdir(parents=True, exist_ok=True)
+
+
+def _ensure_state_dirs(state_dir: Path) -> None:
+    for name in ("restore", "unprocessed"):
+        (state_dir / name).mkdir(parents=True, exist_ok=True)
 
 
 def _append_log(path: Path, message: str) -> None:

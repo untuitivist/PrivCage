@@ -7,7 +7,7 @@ from pathlib import Path
 from .config import load_config
 from .errors import PrivCageError
 from .processor import process_input
-from .restore import restore_markdown
+from .restore import restore_markdown, reveal_placeholder
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -18,7 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--centralize-unprocessed",
         action="store_true",
-        help="copy unprocessed files to source_root.privacy/unprocessed/<relative-path>",
+        help="copy unprocessed files to .privcage/source_root.privacy/unprocessed/<relative-path>",
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -29,14 +29,18 @@ def build_parser() -> argparse.ArgumentParser:
     preprocess.add_argument(
         "--centralize-unprocessed",
         action="store_true",
-        help="copy unprocessed files to source_root.privacy/unprocessed/<relative-path>",
+        help="copy unprocessed files to .privcage/source_root.privacy/unprocessed/<relative-path>",
     )
 
     restore = subparsers.add_parser("restore", help="restore placeholders in a Markdown file")
     restore.add_argument("--privacy", required=True, help=".privacy artifact directory")
     restore.add_argument("--input", required=True, help="AI-processed Markdown file")
-    restore.add_argument("--output", required=True, help="restored Markdown output path")
+    restore.add_argument("--output", help="restored Markdown output path; defaults to <privacy>/{source_name}_restored.md")
     restore.add_argument("--print-log", action="store_true", help="print ordinary restore logs to console")
+
+    reveal = subparsers.add_parser("reveal", help="print the plaintext for one PRIVACY placeholder")
+    reveal.add_argument("--privacy", required=True, help=".privacy artifact directory")
+    reveal.add_argument("--placeholder", required=True, help="full [PRIVACY:{TYPE}:{cipher_blob}] placeholder")
     return parser
 
 
@@ -50,11 +54,14 @@ def main(argv: list[str] | None = None) -> int:
             result = restore_markdown(
                 privacy_dir=Path(args.privacy),
                 input_path=Path(args.input),
-                output_path=Path(args.output),
+                output_path=Path(args.output) if args.output else None,
                 config=config,
             )
             if args.print_log:
                 print(f"restored: {result.input_path} -> {result.output_path} ({result.restored_count} placeholders)")
+            return 0
+        if args.command == "reveal":
+            print(reveal_placeholder(Path(args.privacy), args.placeholder, config))
             return 0
 
         input_arg = args.input

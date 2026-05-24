@@ -434,137 +434,11 @@ treemap-beta
             "unprocessed/": 1
 ```
 
-## 10. 项目结构
-
-```text
-PrivCage/
-|-- pyproject.toml
-|-- README.md
-|-- config.example/
-|   `-- privcage.example.toml
-|-- examples/
-|   `-- full_test/
-|       |-- README.md
-|       `-- input/
-|-- scripts/
-|   `-- build_exe.ps1
-|-- src/
-|   `-- privcage/
-|       |-- cli.py
-|       |-- gui_app.py
-|       |-- config.py
-|       |-- crypto.py
-|       |-- env_status.py
-|       |-- manifest.py
-|       |-- markdown.py
-|       |-- placeholder.py
-|       |-- processor.py
-|       |-- recognize.py
-|       |-- restore.py
-|       `-- parsers/
-|           |-- legacy_office_parser.py
-|           |-- office_parser.py
-|           |-- pdf_parser.py
-|           |-- registry.py
-|           `-- text_parser.py
-`-- tests/
-    |-- test_cli.py
-    |-- test_crypto.py
-    |-- test_pdf_parser.py
-    `-- test_processor.py
-```
-
-说明：
-
-- `cli.py` 提供 `preprocess`、`restore`、`reveal`。
-- `gui_app.py` 提供 GUI，直接调用核心函数，不复制业务逻辑。
-- `processor.py` 负责生成 `.privacy/` 和 `.privcage/`。
-- `restore.py` 负责回填和单个 placeholder 查询。
-- `parsers/` 负责不同文件格式转 Markdown 中间文本和资源。
-
-## 11. 环境与测试
-
-推荐使用独立 CPython 环境，避免 Anaconda 与 PySide6 的 Qt DLL 冲突：
-
-```powershell
-uv venv .venv-gui --python "C:\Program Files\Python312\python.exe"
-uv pip install --python .venv-gui\Scripts\python.exe -e ".[dev,gui,office,pdf]"
-```
-
-运行测试：
-
-```powershell
-.venv-gui\Scripts\python -m pytest
-```
-
-当前测试覆盖：
-
-- AES-GCM envelope 加解密。
-- CLI `preprocess/restore/reveal`。
-- `.privacy/` 与 `.privcage/` 目录隔离。
-- 无法处理文件落点。
-- PDF 文本页不截图、图片页才截图。
-
-## 12. 打包 EXE
-
-目标是生成可分发的 Windows GUI 程序，让使用者只运行 exe，不需要自己安装 Python 环境。
-
-准备环境：
-
-```powershell
-uv pip install --python .venv-gui\Scripts\python.exe pyinstaller
-```
-
-打包：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_exe.ps1
-```
-
-输出：
-
-```text
-dist/PrivCage.exe
-```
-
-注意：
-
-- `.venv-gui/` 不提交，不随源码分发。
-- `dist/` 是生成物，默认忽略。
-- PyInstaller 会把 Python 运行时、PySide6、Office/PDF 解析依赖收进 exe。
-- LibreOffice 不会被自动打进 exe；旧 `.doc/.xls/.ppt` 转换仍依赖目标机器可用的 LibreOffice，或后续改为捆绑转换组件。
-
-## 13. 当前状态与后续计划
-
-已完成：
-
-- CLI + GUI。
-- 外网 `.privacy/` 与内网 `.privcage/` 分离。
-- 可逆 placeholder 加密和回填。
-- 单个 placeholder reveal。
-- 文本、结构化、Office、PDF 基础解析。
-- 全量示例目录 `examples/full_test/input/`。
-- GUI 教程页和终端页。
-
-后续优先级：
-
-1. 完成 Windows exe 打包和 smoke test。
-2. GUI 长任务改为后台线程，避免大目录处理时卡顿。
-3. 增加用户词库、模糊匹配配置页。
-4. 接入可选 spaCy/transformers 识别器。
-5. 增加导出回 docx/xlsx/pptx 的能力。
-6. 优化旧 Office 转换部署方案。
-
-## 14. 示例操作教程
+## 10. 示例操作教程
 
 以下示例假设已经安装开发环境：
 
-```powershell
-uv venv .venv-gui --python "C:\Program Files\Python312\python.exe"
-uv pip install --python .venv-gui\Scripts\python.exe -e ".[dev,gui,office,pdf]"
-```
-
-### 14.1 准备测试文件夹
+### 10.1 准备测试文件夹
 
 创建一个输入目录，例如：
 
@@ -594,7 +468,7 @@ demo_input/
 
 建议每个可处理文件里放一两个邮箱、手机号或身份证号，便于观察脱敏效果。
 
-### 14.2 CLI：配置密钥
+### 10.2 CLI：配置密钥
 
 CLI 需要通过环境变量或 key file 提供主密钥。下面是一个测试 key：
 
@@ -604,7 +478,7 @@ $env:PRIVCAGE_MASTER_KEY = "NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU"
 
 正式使用时应生成随机 32-byte key，并保存在内网用户配置或 `PRIVCAGE_KEY_FILE` 指向的文件中。
 
-### 14.3 CLI：预处理
+### 10.3 CLI：预处理
 
 ```powershell
 .venv-gui\Scripts\python -m privcage preprocess `
@@ -645,7 +519,7 @@ demo_out/
 - `.privcage/` 是内网状态目录，不能外发。
 - 如果有无法处理文件，CLI 会强制打印 `unprocessed:` 行；存在无法处理文件时退出码可能为 `1`，但已处理文件仍然有效。
 
-### 14.4 CLI：检查 PDF 输出
+### 10.4 CLI：检查 PDF 输出
 
 文本型 PDF 页面只输出文字：
 
@@ -661,7 +535,7 @@ demo_out/demo_input.privacy/pdf/image_only.pdf.privacy/figures/pdf_pages/page-00
 
 混合 PDF 会逐页处理：有文字的页写文字，无文字的页写图片引用。
 
-### 14.5 CLI：外发给 AI
+### 10.5 CLI：外发给 AI
 
 把对应公开目录里的内容交给外网 AI：
 
@@ -677,7 +551,7 @@ demo_out/demo_input.privacy/docs/note.txt.privacy/attachments/
 demo_out/.privcage/
 ```
 
-### 14.6 CLI：回填恢复
+### 10.6 CLI：回填恢复
 
 假设 AI 返回文件为：
 
@@ -702,7 +576,7 @@ demo_out/demo_input.privacy/docs/note.txt.privacy/note.txt_restored.md
 
 `{原名}_restored.md` 与 `document.md` 并列，因此 `./figures/...` 和 `./attachments/...` 相对引用仍然可用。
 
-### 14.7 CLI：查询单个占位符
+### 10.7 CLI：查询单个占位符
 
 从 `document.md` 或 AI 返回内容中复制完整占位符：
 
@@ -724,7 +598,7 @@ demo_out/demo_input.privacy/docs/note.txt.privacy/note.txt_restored.md
 alice@example.com
 ```
 
-### 14.8 GUI：启动
+### 10.8 GUI：启动
 
 ```powershell
 .venv-gui\Scripts\python -m privcage.gui_app
@@ -736,7 +610,7 @@ alice@example.com
 privcage-gui
 ```
 
-### 14.9 GUI：配置密钥
+### 10.9 GUI：配置密钥
 
 1. 打开 `状态与设置`。
 2. 点击 `生成随机密钥`。
@@ -745,7 +619,7 @@ privcage-gui
 
 GUI 不会在状态摘要里显示真实密钥。
 
-### 14.10 GUI：预处理
+### 10.10 GUI：预处理
 
 1. 打开 `预处理`。
 2. `输入` 选择文件或文件夹。
@@ -754,7 +628,7 @@ GUI 不会在状态摘要里显示真实密钥。
 5. 点击 `开始预处理`。
 6. 查看结果表格里的 `公开目录` 和 `状态目录`。
 
-### 14.11 GUI：外发包检查
+### 10.11 GUI：外发包检查
 
 1. 打开 `外发包`。
 2. 选择一个公开 `.privacy/` 目录。
@@ -762,7 +636,7 @@ GUI 不会在状态摘要里显示真实密钥。
 4. 如果提示 `检查通过`，可以把该目录里的 `document.md`、`figures/`、`attachments/` 发给外网 AI。
 5. 如果提示内部文件混入，不要外发，先检查目录内容。
 
-### 14.12 GUI：回填恢复
+### 10.12 GUI：回填恢复
 
 1. 打开 `回填恢复`。
 2. 选择公开 `.privacy/` 目录。
@@ -770,7 +644,7 @@ GUI 不会在状态摘要里显示真实密钥。
 4. 输出路径可留空，默认写入 `.privacy/{原名}_restored.md`。
 5. 点击 `开始回填`。
 
-### 14.13 GUI：占位符查询
+### 10.13 GUI：占位符查询
 
 1. 打开 `占位符查询`。
 2. 选择公开 `.privacy/` 目录。
@@ -778,7 +652,7 @@ GUI 不会在状态摘要里显示真实密钥。
 4. 点击 `查询`。
 5. 明文显示在结果框中。
 
-### 14.14 GUI：终端
+### 10.14 GUI：终端
 
 1. 打开 `终端`。
 2. 在输入框里写 PowerShell 命令，例如 `.venv-gui\Scripts\python -m privcage --help`。

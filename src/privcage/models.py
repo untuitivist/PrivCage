@@ -25,6 +25,7 @@ class ParseResult:
 class ProcessResult:
     source: Path
     output_dir: Path
+    state_dir: Path
     manifest_path: Path
     document_path: Path
     log_path: Path

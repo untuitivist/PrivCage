@@ -9,13 +9,18 @@ from .errors import PrivCageError
 from .models import RestoreResult
 
 
-def restore_markdown(privacy_dir: Path, input_path: Path, output_path: Path, config: AppConfig) -> RestoreResult:
+def restore_markdown(
+    privacy_dir: Path,
+    input_path: Path,
+    output_path: Path | None,
+    config: AppConfig,
+) -> RestoreResult:
     privacy_dir = privacy_dir.resolve()
+    state_dir = _state_dir_for_privacy_dir(privacy_dir)
     input_path = input_path.resolve()
-    output_path = output_path.resolve()
 
-    manifest_path = privacy_dir / "manifest.json"
-    restore_index_path = privacy_dir / "restore" / "index.json"
+    manifest_path = state_dir / "manifest.json"
+    restore_index_path = state_dir / "restore" / "index.json"
     if not manifest_path.is_file():
         raise PrivCageError(f"manifest not found: {manifest_path}")
     if not restore_index_path.is_file():
@@ -25,6 +30,7 @@ def restore_markdown(privacy_dir: Path, input_path: Path, output_path: Path, con
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     restore_index = json.loads(restore_index_path.read_text(encoding="utf-8"))
+    output_path = (output_path or privacy_dir / _default_restored_name(manifest)).resolve()
     text = input_path.read_text(encoding="utf-8")
 
     context = CryptoContext(
@@ -49,8 +55,62 @@ def restore_markdown(privacy_dir: Path, input_path: Path, output_path: Path, con
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(text, encoding="utf-8")
-    _append_log(privacy_dir / "process.log", f"restored input={input_path} output={output_path} count={restored_count}")
+    _append_log(state_dir / "process.log", f"restored input={input_path} output={output_path} count={restored_count}")
     return RestoreResult(input_path=input_path, output_path=output_path, restored_count=restored_count)
+
+
+def reveal_placeholder(privacy_dir: Path, placeholder: str, config: AppConfig) -> str:
+    privacy_dir = privacy_dir.resolve()
+    manifest, restore_index = _load_restore_context(_state_dir_for_privacy_dir(privacy_dir))
+    item = _find_placeholder(restore_index, placeholder)
+    context = _build_crypto_context(manifest, config)
+    cipher_blob = _extract_cipher_blob(placeholder)
+    payload = decrypt_placeholder_payload(cipher_blob, item["hit_id"], item["placeholder_type"], context)
+    return payload["text"]
+
+
+def _load_restore_context(state_dir: Path) -> tuple[dict, dict]:
+    manifest_path = state_dir / "manifest.json"
+    restore_index_path = state_dir / "restore" / "index.json"
+    if not manifest_path.is_file():
+        raise PrivCageError(f"manifest not found: {manifest_path}")
+    if not restore_index_path.is_file():
+        raise PrivCageError(f"restore index not found: {restore_index_path}")
+    return (
+        json.loads(manifest_path.read_text(encoding="utf-8")),
+        json.loads(restore_index_path.read_text(encoding="utf-8")),
+    )
+
+
+def _state_dir_for_privacy_dir(privacy_dir: Path) -> Path:
+    public_root = _public_root_for_privacy_dir(privacy_dir)
+    output_root = public_root.parent
+    relative = privacy_dir.relative_to(output_root)
+    return output_root / ".privcage" / relative
+
+
+def _public_root_for_privacy_dir(privacy_dir: Path) -> Path:
+    privacy_ancestors = [path for path in (privacy_dir, *privacy_dir.parents) if path.name.endswith(".privacy")]
+    if not privacy_ancestors:
+        raise PrivCageError(f"not a .privacy directory: {privacy_dir}")
+    return privacy_ancestors[-1]
+
+
+def _build_crypto_context(manifest: dict, config: AppConfig) -> CryptoContext:
+    return CryptoContext(
+        key=config.master_key,
+        key_id=config.key_id,
+        protocol_version=manifest["protocol_version"],
+        privacy_id=manifest["privacy_id"],
+        source_hash=manifest["source_file"]["sha256"],
+    )
+
+
+def _find_placeholder(restore_index: dict, placeholder: str) -> dict:
+    for item in restore_index.get("placeholders", []):
+        if item["privacy_placeholder"] == placeholder:
+            return item
+    raise PrivCageError("placeholder not found in restore index")
 
 
 def _extract_cipher_blob(placeholder: str) -> str:
@@ -65,3 +125,8 @@ def _extract_cipher_blob(placeholder: str) -> str:
 def _append_log(path: Path, message: str) -> None:
     with path.open("a", encoding="utf-8") as handle:
         handle.write(message + "\n")
+
+
+def _default_restored_name(manifest: dict) -> str:
+    source_name = manifest.get("source_file", {}).get("name") or "restored"
+    return f"{source_name}_restored.md"

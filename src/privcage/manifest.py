@@ -33,7 +33,7 @@ def build_manifest(
             "enabled": {"rule": True, "spacy": False, "transformers": False},
         },
         "hits": hits,
-        "restore_targets": ["restore/restored.md"],
+        "restore_targets": [f"{source_name}_restored.md"],
     }
 
 

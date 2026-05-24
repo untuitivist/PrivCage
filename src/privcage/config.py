@@ -46,3 +46,7 @@ def _decode_key(text: str) -> bytes:
     if len(key) != 32:
         raise ConfigError("master key must decode to exactly 32 bytes")
     return key
+
+
+def decode_master_key(text: str) -> bytes:
+    return _decode_key(text)
