@@ -4,13 +4,13 @@
 *.key
 *.pem
 privcage.toml
-config/
 
 # Generated outputs
 *.privacy/
 out/
 dist/
 build/
+.tmp_*/
 
 # Python
 __pycache__/

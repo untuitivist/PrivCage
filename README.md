@@ -22,20 +22,29 @@ CLI 参数：
 | ---- | ---- |
 | `--input` | 输入文件或文件夹 |
 | `--output` | 输出根目录 |
-| `--log` | 普通日志开关，建议 `on/off` |
+| `--print-log` | 将普通处理日志打印到控制台；日志本身始终记录 |
 | `--centralize-unprocessed` | 将无法处理文件集中放到批量根目录的 `unprocessed/` 下 |
 
 输出命名：
 
 ```text
-privcage --input meeting.docx --output out/
+privcage preprocess --input meeting.docx --output out/
 => out/meeting.docx.privacy/
 
-privcage --input source_root/ --output out/
+privcage preprocess --input source_root/ --output out/
 => out/source_root.privacy/
+
+privcage restore --privacy out/meeting.docx.privacy/ --input ai-result.md --output restored.md
 ```
 
-无法处理的文件必须打印信息，即使 `--log off`。至少打印原始路径、失败阶段、失败原因。
+无法处理的文件必须打印信息，即使未开启 `--print-log`。至少打印原始路径、失败阶段、失败原因。
+
+CLI 子命令：
+
+- `preprocess`：生成 `.privacy/` 产物目录。
+- `restore`：读取 `.privacy/`、AI 处理后的 Markdown，并输出回填后的 Markdown。
+- 顶层 `--input/--output` 仍作为 `preprocess` 兼容入口保留。
+- 每个产物目录都会写入 `process.log`；`--print-log` 只控制是否向控制台打印普通处理日志。
 
 ## 2. 输出目录协议
 
@@ -288,7 +297,7 @@ sequenceDiagram
     participant A as 外网AI
     participant R as 回填恢复
 
-    U->>C: 选择 input/output/log
+    U->>C: 选择 input/output/print-log
     C->>I: 提交参数
     I->>F: 分派文件类型
     F->>F: 提取文本与结构
@@ -451,7 +460,7 @@ PrivCage/
 - CLI + GUI(exe)，GUI 直接调用 CLI
 - `--input` 支持文件和目录
 - `--output` 自动创建 `{input}.privacy/`
-- `--log` 控制普通日志
+- `--print-log` 控制是否向控制台打印普通处理日志
 - 无法处理文件强制打印并落盘
 - 规则识别、用户词库、模糊匹配
 - `spaCy` / `transformers` 可选关闭
