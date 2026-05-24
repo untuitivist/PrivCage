@@ -1,13 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.utils.hooks import collect_all
 
 datas = [('config.example', 'config.example'), ('docs', 'docs')]
-binaries = []
+binaries = [('C:\\WINDOWS\\System32\\msvcp140.dll', '.'), ('C:\\WINDOWS\\System32\\msvcp140_1.dll', '.'), ('C:\\WINDOWS\\System32\\msvcp140_2.dll', '.')]
 hiddenimports = ['docx', 'openpyxl', 'pptx', 'lxml', 'cryptography']
-tmp_ret = collect_all('PySide6')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('shiboken6')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+datas += collect_data_files('PySide6')
+binaries += collect_dynamic_libs('PySide6')
+binaries += collect_dynamic_libs('shiboken6')
+hiddenimports += collect_submodules('PySide6.QtCore')
+hiddenimports += collect_submodules('PySide6.QtGui')
+hiddenimports += collect_submodules('PySide6.QtWidgets')
 tmp_ret = collect_all('fitz')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
@@ -37,7 +42,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,

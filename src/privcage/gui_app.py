@@ -41,6 +41,35 @@ class GuiState:
 
 GUI_STATE = GuiState()
 TERMINAL_OUTPUT = None
+DLL_DIRECTORY_HANDLES = []
+
+
+def prepare_frozen_qt_runtime() -> None:
+    """Make PySide6 wheel DLLs discoverable inside a PyInstaller bundle."""
+    global DLL_DIRECTORY_HANDLES
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if not bundle_root:
+        return
+
+    root = Path(bundle_root)
+    candidates = [
+        root,
+        root / "PySide6",
+        root / "shiboken6",
+    ]
+    if os.name == "nt":
+        for path in candidates:
+            if path.exists():
+                DLL_DIRECTORY_HANDLES.append(os.add_dll_directory(str(path)))
+        os.environ["PATH"] = os.pathsep.join(str(path) for path in candidates if path.exists()) + os.pathsep + os.environ.get("PATH", "")
+
+    pyside_root = root / "PySide6"
+    plugins = pyside_root / "plugins"
+    qml = pyside_root / "qml"
+    if plugins.exists():
+        os.environ.setdefault("QT_PLUGIN_PATH", str(plugins))
+    if qml.exists():
+        os.environ.setdefault("QML2_IMPORT_PATH", str(qml))
 
 
 def terminal_log(message: str) -> None:
@@ -50,6 +79,7 @@ def terminal_log(message: str) -> None:
 
 
 def run() -> int:
+    prepare_frozen_qt_runtime()
     try:
         from PySide6.QtWidgets import QApplication
     except ImportError as exc:
@@ -479,6 +509,9 @@ def build_readme_page():
     layout.addWidget(viewer)
 
     def guide_path(name: str) -> Path:
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if bundle_root:
+            return Path(bundle_root) / "docs" / name
         return Path(__file__).resolve().parents[2] / "docs" / name
 
     def load_guide() -> None:
