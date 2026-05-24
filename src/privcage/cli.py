@@ -33,13 +33,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     restore = subparsers.add_parser("restore", help="restore placeholders in a Markdown file")
-    restore.add_argument("--privacy", required=True, help=".privacy artifact directory")
+    restore.add_argument("--privacy", required=True, help=".privacy artifact directory; can be a file artifact or a batch root")
     restore.add_argument("--input", required=True, help="AI-processed Markdown file")
-    restore.add_argument("--output", help="restored Markdown output path; defaults to <privacy>/{source_name}_restored.md")
+    restore.add_argument("--output", help="restored Markdown output path; defaults to <privacy>/{source_or_root_name}_restored.md")
     restore.add_argument("--print-log", action="store_true", help="print ordinary restore logs to console")
 
     reveal = subparsers.add_parser("reveal", help="print the plaintext for one PRIVACY placeholder")
-    reveal.add_argument("--privacy", required=True, help=".privacy artifact directory")
+    reveal.add_argument("--privacy", required=True, help=".privacy artifact directory; can be a file artifact or a batch root")
     reveal.add_argument("--placeholder", required=True, help="full [PRIVACY:{TYPE}:{cipher_blob}] placeholder")
     return parser
 

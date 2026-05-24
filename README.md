@@ -27,7 +27,7 @@ GUI 功能页：
 
 - `预处理`：选择输入和输出，生成外网 `.privacy/` 与内网 `.privcage/`。
 - `外发包`：扫描 `.privacy/`，检查是否混入 `manifest.json`、`process.log`、`restore/index.json` 等内网文件。
-- `回填恢复`：选择 `.privacy/` 和 AI Markdown，默认输出 `.privacy/{原名}_restored.md`。
+- `回填恢复`：选择单文件 `.privacy/` 或批量根 `source_root.privacy/` 和 AI Markdown，默认输出到所选 `.privacy/{原名或根目录名}_restored.md`。
 - `占位符查询`：输入完整 `[PRIVACY:...]`，返回对应明文。
 - `终端`：执行 PowerShell 命令，并显示 GUI 操作对应的 CLI 命令与打印结果。
 - `状态与设置`：显示密钥来源和依赖可用性，不显示真实密钥。
@@ -54,6 +54,9 @@ privcage preprocess --input source_root/ --output out/
 privcage restore --privacy out/meeting.docx.privacy/ --input ai-result.md
 => out/meeting.docx.privacy/meeting.docx_restored.md
 
+privcage restore --privacy out/source_root.privacy/ --input ai-result.md
+=> out/source_root.privacy/source_root_restored.md
+
 privcage reveal --privacy out/meeting.docx.privacy/ --placeholder "[PRIVACY:EMAIL:...]"
 => alice@example.com
 ```
@@ -63,7 +66,7 @@ privcage reveal --privacy out/meeting.docx.privacy/ --placeholder "[PRIVACY:EMAI
 CLI 子命令：
 
 - `preprocess`：生成 `.privacy/` 产物目录。
-- `restore`：读取 `.privacy/`、AI 处理后的 Markdown，并默认输出到对应 `.privacy/{原名}_restored.md`，与 `document.md` 并列，以便继续使用同一产物目录下的相对引用资源。
+- `restore`：读取单文件 `.privacy/` 或批量根 `.privacy/`、AI 处理后的 Markdown，并默认输出到所选目录下的 `{原名或根目录名}_restored.md`。单文件场景仍与 `document.md` 并列，以便继续使用同一产物目录下的相对引用资源；批量根场景适合 AI 返回内容合并了多个子文档占位符。
 - `reveal`：读取 `.privacy/` 和单个完整占位符，打印对应明文。
 - 顶层 `--input/--output` 仍作为 `preprocess` 兼容入口保留。
 - 每个内部状态目录都会写入 `process.log`；`--print-log` 只控制是否向控制台打印普通处理日志。
@@ -693,7 +696,7 @@ ai-result.md
 
 ```powershell
 .venv-gui\Scripts\python -m privcage restore `
-  --privacy demo_out\demo_input.privacy\docs\note.txt.privacy `
+  --privacy demo_out\demo_input.privacy `
   --input ai-result.md `
   --print-log
 ```
@@ -701,10 +704,10 @@ ai-result.md
 默认输出：
 
 ```text
-demo_out/demo_input.privacy/docs/note.txt.privacy/note.txt_restored.md
+demo_out/demo_input.privacy/demo_input_restored.md
 ```
 
-`{原名}_restored.md` 与 `document.md` 并列，因此 `./figures/...` 和 `./attachments/...` 相对引用仍然可用。
+如果 AI 只处理了单个文件，也可以选择对应叶子目录，例如 `demo_out\demo_input.privacy\docs\note.txt.privacy`，默认输出仍为 `note.txt_restored.md` 并与该文件的 `document.md` 并列。若 AI Markdown 合并了多个子文档的内容，选择批量根目录即可一次性回填所有命中的占位符。
 
 ### 14.7 CLI：查询单个占位符
 
@@ -769,9 +772,9 @@ GUI 不会在状态摘要里显示真实密钥。
 ### 14.12 GUI：回填恢复
 
 1. 打开 `回填恢复`。
-2. 选择公开 `.privacy/` 目录。
+2. 选择公开 `.privacy/` 目录；目录批处理时建议选择批量根 `source_root.privacy/`，单文件处理时选择对应叶子 `.privacy/` 也可以。
 3. 选择 AI 返回的 Markdown 文件。
-4. 输出路径可留空，默认写入 `.privacy/{原名}_restored.md`。
+4. 输出路径可留空，默认写入所选目录下的 `{原名或根目录名}_restored.md`。
 5. 点击 `开始回填`。
 
 ### 14.13 GUI：占位符查询

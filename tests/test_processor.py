@@ -47,6 +47,37 @@ def test_restore_markdown_round_trip(tmp_path: Path) -> None:
     assert "alice@example.com" in restored.read_text(encoding="utf-8")
 
 
+def test_restore_markdown_from_batch_root(tmp_path: Path) -> None:
+    source_root = tmp_path / "source_root"
+    docs = source_root / "docs"
+    docs.mkdir(parents=True)
+    (docs / "a.txt").write_text("Email alice@example.com.", encoding="utf-8")
+    (docs / "b.txt").write_text("Call +1 555 123 4567.", encoding="utf-8")
+    config = AppConfig(master_key=b"2" * 32)
+
+    process_input(source_root, tmp_path / "out", config)
+    root_privacy_dir = tmp_path / "out" / "source_root.privacy"
+    ai_result = tmp_path / "ai-result.md"
+    ai_result.write_text(
+        "\n\n".join(
+            [
+                (root_privacy_dir / "docs" / "a.txt.privacy" / "document.md").read_text(encoding="utf-8"),
+                (root_privacy_dir / "docs" / "b.txt.privacy" / "document.md").read_text(encoding="utf-8"),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = restore_markdown(root_privacy_dir, ai_result, None, config)
+
+    restored = root_privacy_dir / "source_root_restored.md"
+    restored_text = restored.read_text(encoding="utf-8")
+    assert result.restored_count == 2
+    assert result.output_path == restored.resolve()
+    assert "alice@example.com" in restored_text
+    assert "+1 555 123 4567" in restored_text
+
+
 def test_unprocessed_default_keeps_relative_path(tmp_path: Path) -> None:
     source_root = tmp_path / "source_root"
     source_file = source_root / "A" / "B" / "bad.bin"

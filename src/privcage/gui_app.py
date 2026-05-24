@@ -252,7 +252,7 @@ def build_restore_page():
 
     page = QWidget()
     layout = QVBoxLayout(page)
-    layout.addWidget(QLabel("默认输出到 .privacy/{原名}_restored.md，与 document.md 并列"))
+    layout.addWidget(QLabel("可选择单文件 .privacy 或批量根 .privacy；默认输出到所选目录下的 {原名或根目录名}_restored.md"))
     privacy_edit = QLineEdit()
     input_edit = QLineEdit()
     output_edit = QLineEdit()
@@ -547,7 +547,7 @@ def build_tutorial_page():
 核心边界
 1. .privacy/ 是外网可见目录，只包含 document.md、{原名}_restored.md、figures/、attachments/。
 2. .privcage/ 是内网状态目录，包含 manifest.json、restore/index.json、process.log、无法处理原文件，禁止外发，无需手动操作或选取。
-3. {原名}_restored.md 默认与 document.md 并列，保证 ./figures 和 ./attachments 相对引用可用。
+3. 单文件回填时 {原名}_restored.md 默认与 document.md 并列；批量根回填时输出到 source_root.privacy/{根目录名}_restored.md。
 
 GUI 快速流程
 1. 打开“状态与设置”。
@@ -561,9 +561,9 @@ GUI 快速流程
 9. 打开“外发包”，选择公开 .privacy 目录，点击“扫描外发目录”。
 10. 检查通过后，只把 .privacy 目录中的 document.md、figures/、attachments/ 交给外网 AI。
 11. 外网 AI 返回 Markdown 后，打开“回填恢复”。
-12. 选择同一个 .privacy 目录。
+12. 目录批处理时选择批量根 source_root.privacy；单文件处理时选择对应叶子 .privacy 也可以。
 13. 选择 AI 返回的 Markdown。
-14. 输出路径可留空，默认生成 .privacy/{原名}_restored.md。
+14. 输出路径可留空，默认生成所选目录下的 {原名或根目录名}_restored.md。
 15. 如需查询单个占位符，打开“占位符查询”，选择 .privacy 目录并粘贴完整 [PRIVACY:...]。
 
 CLI 快速流程
@@ -578,10 +578,10 @@ CLI 快速流程
    不要发送 demo_out/.privcage/。
 
 4. 回填：
-   .venv-gui\\Scripts\\python -m privcage restore --privacy demo_out\\demo_input.privacy\\docs\\note.txt.privacy --input ai-result.md --print-log
+   .venv-gui\\Scripts\\python -m privcage restore --privacy demo_out\\demo_input.privacy --input ai-result.md --print-log
 
 5. 默认输出：
-   demo_out/demo_input.privacy/docs/note.txt.privacy/note.txt_restored.md
+   demo_out/demo_input.privacy/demo_input_restored.md
 
 6. 查询单个占位符：
    .venv-gui\\Scripts\\python -m privcage reveal --privacy demo_out\\demo_input.privacy\\docs\\note.txt.privacy --placeholder "[PRIVACY:EMAIL:...]"
