@@ -1,0 +1,16 @@
+# Copy this file to the user config directory and fill values locally.
+# Do not commit real keys.
+
+[crypto]
+key_id = "default"
+
+# Prefer PRIVCAGE_MASTER_KEY or PRIVCAGE_KEY_FILE in production.
+# master_key must be a 32-byte key encoded as base64url when used here.
+master_key = "REPLACE_WITH_BASE64URL_32_BYTE_KEY"
+
+[recognition]
+enable_spacy = false
+enable_transformers = false
+
+[output]
+centralize_unprocessed = false

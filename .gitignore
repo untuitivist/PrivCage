@@ -1,0 +1,25 @@
+# Local secrets and user config
+.env
+.env.*
+*.key
+*.pem
+privcage.toml
+config/
+
+# Generated outputs
+*.privacy/
+out/
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
