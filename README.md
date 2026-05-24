@@ -545,15 +545,19 @@ dist/PrivCage.exe
 - 文本、结构化、Office、PDF 基础解析。
 - 全量示例目录 `examples/full_test/input/`。
 - GUI 教程页和终端页。
+- Windows 单文件 exe 打包、独立启动 smoke test。
+- 用户指南 Markdown/PDF 随 exe 打包并在 GUI README 页读取。
+- `v0.2.0` tag 与 GitHub Release 页面已创建。
 
 后续优先级：
 
-1. 完成 Windows exe 打包和 smoke test。
+1. 将 `dist/PrivCage.exe` 上传到 `v0.2.0` GitHub Release 资产。
 2. GUI 长任务改为后台线程，避免大目录处理时卡顿。
 3. 增加用户词库、模糊匹配配置页。
 4. 接入可选 spaCy/transformers 识别器。
 5. 增加导出回 docx/xlsx/pptx 的能力。
-6. 优化旧 Office 转换部署方案。
+6. 优化旧 Office 转换部署方案；当前仍依赖目标机器可用 LibreOffice。
+7. 增加更多端到端样例：混合 PDF、扫描件、旧 Office、复杂表格。
 
 ## 14. 示例操作教程
 
